@@ -9,7 +9,28 @@
   <script>
   	// Self-executing wrapper
 		(function($){
-		  // **ListView class**: Our main app view.
+
+			/**********************************
+			MODEL 
+			**********************************/
+			var Item = Backbone.Model.extend({
+				defaults: {
+					part1: 'hello', 
+					part2: 'world'
+				}
+			});
+
+			/**********************************
+			Collection
+			**********************************/
+			var List = Backbone.Collection.extend({
+				model: Item
+			});
+
+
+			/**********************************
+			View
+			**********************************/
 		  var ListView = Backbone.View.extend({    
 		    el: $('body'), // attaches `this.el` to an existing element.
 
@@ -17,22 +38,37 @@
 		    events: {
 		    	'click button#add': 'addItem'
 		    },
+
 		    // `initialize()`: Automatically called upon instantiation. Where you make all types of bindings, _excluding_ UI events, such as clicks, etc.
 		    initialize: function(){
-		      _.bindAll(this, 'render', 'addItem'); // fixes loss of context for 'this' within methods
+		      _.bindAll(this, 'render', 'addItem', 'appendItem'); 
 		       
+		      this.collection = new List();
+		      this.collection.bind('add', this.appendItem); //whenever add is called on the list, append is called to update view. 
+
 		       this.counter = 0; 
 		       this.render(); // not all views are self-rendering. This one is.
 		    },
 		    // `render()`: Function in charge of rendering the entire view in `this.el`. Needs to be manually called by the user.
 		    render: function(){
 		      $(this.el).append("<button id='add'>Add list item</button>");
-		      $(this.el).append("<ul></ul>")
+		      $(this.el).append("<ul></ul>");
+		      _(this.collection.models).each(function(item){
+		      	self.appendItem(item);
+		      }, this);
 		    },
 
 			  addItem: function() {
 			  	this.counter++; 
-			  	$('ul', this.el).append("<li>hello world" + this.counter + "</li>"); 
+			  	var item = new Item(); 
+			  	item.set({
+			  		part2: item.get('part2') + this.counter //overriding default
+			  	});
+			  	this.collection.add(item); // add item to collection. view is updated because of the binding of 'add' in initialize.
+			  	},
+
+			  appendItem: function(item) {
+			  	$('ul', this.el).append("<li>"+item.get('part1') + " " + item.get('part2') + "</li>"); 			  	
 			  	}
 			  });
 
